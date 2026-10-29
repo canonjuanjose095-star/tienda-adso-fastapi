@@ -157,3 +157,9 @@ Los pedidos se crean confirmados por defecto, por lo que descuentan existencias 
 `200` consulta/actualización, `201` creación, `204` borrado, `404` recurso inexistente, `409` correo duplicado, stock insuficiente, pedido ya cancelado o restricción relacional, y `422` cuerpo/query inválido.
 
 Este proyecto es local y formativo; no incorpora autenticación ni autorización para exposición pública.
+
+## Evidencias para la entrega
+
+La carpeta `evidencias/` contiene `Informe_Evidencias_Taller_03.docx`, las capturas del flujo de prueba y `consulta_join.sql` para repetir en MySQL la consulta relacional documentada. El informe incluye la estructura en VS Code, recursos de Swagger, compra y detalle, actualización de inventario, validación de stock insuficiente, persistencia tras iniciar un servidor nuevo, cancelación y respuestas a las preguntas conceptuales de la guía.
+
+Las pruebas usan temporalmente un pedido y luego limpian los registros para restaurar la base al estado inicial. No se incluye `.env` ni credenciales. El repositorio es privado; agrega al docente como colaborador para que pueda revisarlo, o ajusta su visibilidad según las reglas de tu institución.
