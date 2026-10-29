@@ -331,9 +331,154 @@ async function checkout() {
   }
 }
 
+function renderOrders() {
+  const list = $("#orders-list");
+  list.replaceChildren();
+  if (!state.orders.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-orders";
+    empty.textContent = "Tus pedidos aparecerán aquí cuando hagas tu primera compra.";
+    list.append(empty);
+    return;
+  }
+  for (const order of state.orders) {
+    const row = document.createElement("article");
+    row.className = "order-row";
+    const id = document.createElement("button");
+    id.className = "order-id order-detail-link";
+    id.type = "button";
+    id.textContent = `Pedido #${order.id}`;
+    id.addEventListener("click", () => openOrderDetails(order.id));
+    const customer = document.createElement("span");
+    customer.className = "order-customer";
+    customer.textContent = order.cliente;
+    const date = document.createElement("time");
+    date.className = "order-date";
+    date.dateTime = order.fecha;
+    date.textContent = new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(order.fecha));
+    const total = document.createElement("strong");
+    total.className = "order-amount";
+    total.textContent = money(order.total);
+    const status = document.createElement("span");
+    status.className = `order-state state-${order.estado}`;
+    status.textContent = order.estado;
+    row.append(id, customer, date, total, status);
+    if (order.estado !== "cancelado") {
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.className = "order-cancel";
+      cancel.textContent = "Cancelar";
+      cancel.setAttribute("aria-label", `Cancelar pedido ${order.id}`);
+      cancel.addEventListener("click", () => cancelOrder(order.id));
+      row.append(cancel);
+    } else {
+      const spacer = document.createElement("span");
+      spacer.setAttribute("aria-hidden", "true");
+      row.append(spacer);
+    }
+    list.append(row);
+  }
+}
+
+async function loadOrders() {
+  const list = $("#orders-list");
+  try {
+    state.orders = await api("/pedidos");
+    renderOrders();
+  } catch (error) {
+    list.replaceChildren();
+    const message = document.createElement("div");
+    message.className = "empty-orders error-state";
+    message.append(document.createTextNode(`No se pudieron cargar los pedidos: ${error.message} `));
+    const retry = document.createElement("button");
+    retry.className = "order-cancel";
+    retry.textContent = "Reintentar";
+    retry.addEventListener("click", loadOrders);
+    message.append(retry);
+    list.append(message);
+  }
+}
+
+async function openOrderDetails(orderId) {
+  const backdrop = $("#order-backdrop");
+  const content = $("#order-detail-content");
+  content.replaceChildren();
+  const loading = document.createElement("p");
+  loading.className = "cart-empty";
+  loading.textContent = "Cargando el detalle del pedido…";
+  content.append(loading);
+  backdrop.hidden = false;
+  document.body.style.overflow = "hidden";
+  $(".order-detail-panel").focus();
+  try {
+    const order = await api(`/pedidos/${orderId}`);
+    $("#order-detail-title").textContent = `Pedido #${order.id}`;
+    content.replaceChildren();
+    const summary = document.createElement("div");
+    summary.className = "order-summary";
+    const person = document.createElement("span");
+    person.textContent = order.cliente;
+    const status = document.createElement("span");
+    status.className = `order-state state-${order.estado}`;
+    status.textContent = order.estado;
+    summary.append(person, status);
+    const items = document.createElement("div");
+    items.className = "order-detail-items";
+    for (const item of order.items) {
+      const line = document.createElement("div");
+      line.className = "order-detail-line";
+      const label = document.createElement("div");
+      const name = document.createElement("strong");
+      name.textContent = item.producto;
+      const quantity = document.createElement("small");
+      quantity.textContent = `${item.cantidad} × ${money(item.precio_unitario)}`;
+      label.append(name, quantity);
+      const subtotal = document.createElement("span");
+      subtotal.textContent = money(item.subtotal);
+      line.append(label, subtotal);
+      items.append(line);
+    }
+    const total = document.createElement("div");
+    total.className = "order-detail-total";
+    const totalLabel = document.createElement("span");
+    totalLabel.textContent = "Total del pedido";
+    const totalValue = document.createElement("strong");
+    totalValue.textContent = money(order.total);
+    total.append(totalLabel, totalValue);
+    content.append(summary, items, total);
+  } catch (error) {
+    content.replaceChildren();
+    const message = document.createElement("p");
+    message.className = "cart-empty error-state";
+    message.textContent = error.message;
+    content.append(message);
+  }
+}
+
+async function cancelOrder(orderId) {
+  if (!window.confirm(`¿Cancelar el pedido #${orderId}? Si ya estaba confirmado, el stock se devolverá al inventario.`)) return;
+  try {
+    await api(`/pedidos/${orderId}/cancelar`, { method: "POST" });
+    showToast(`El pedido #${orderId} fue cancelado.`);
+    await Promise.all([loadOrders(), loadProducts(state.search)]);
+  } catch (error) {
+    showToast(error.message, "error");
+  }
+}
+
+function closeOrderDetails() {
+  $("#order-backdrop").hidden = true;
+  document.body.style.overflow = $("#modal-backdrop").hidden && $("#customer-backdrop").hidden ? "" : "hidden";
+}
+
 $("#checkout-button").addEventListener("click", checkout);
 $("#customer-select").addEventListener("focus", () => {
   if (!state.customers.length) loadCustomers();
+});
+$("#refresh-orders").addEventListener("click", loadOrders);
+$("#close-order").addEventListener("click", closeOrderDetails);
+$("#order-backdrop").addEventListener("click", (event) => {
+  if (event.target === $("#order-backdrop")) closeOrderDetails();
 });
 
 $("#cart-trigger").addEventListener("click", openCart);
@@ -388,5 +533,6 @@ $("#search-toggle").addEventListener("click", () => {
 
 loadProducts();
 loadCustomers();
+loadOrders();
 updateCartBadge();
 renderCart();

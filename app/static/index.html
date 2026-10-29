@@ -94,5 +94,12 @@
         <form id="customer-form"><label class="field-label" for="customer-name">Nombre</label><input class="form-input" id="customer-name" name="nombre" required minlength="2" maxlength="100" placeholder="Tu nombre" /><label class="field-label" for="customer-email">Correo electrónico</label><input class="form-input" id="customer-email" name="correo" type="email" required placeholder="tu@correo.com" /><button class="button button-dark form-submit" type="submit">Guardar cliente <span aria-hidden="true">↗</span></button></form>
       </section>
     </div>
+
+    <div class="modal-backdrop" id="order-backdrop" hidden>
+      <section class="cart-panel order-detail-panel" role="dialog" aria-modal="true" aria-labelledby="order-detail-title" tabindex="-1">
+        <div class="cart-heading"><div><p class="eyebrow">DETALLE DE COMPRA</p><h2 id="order-detail-title">Pedido<span class="brand-dot">.</span></h2></div><button class="close-button" id="close-order" aria-label="Cerrar detalle">×</button></div>
+        <div class="order-detail-content" id="order-detail-content"></div>
+      </section>
+    </div>
   </body>
 </html>
