@@ -1,4 +1,8 @@
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.routers import clientes, pedidos, productos, reportes
 
@@ -16,10 +20,13 @@ app.include_router(productos.router)
 app.include_router(pedidos.router)
 app.include_router(reportes.router)
 
+STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-@app.get("/", tags=["Inicio"])
-def inicio() -> dict[str, str]:
-    return {"mensaje": "API tienda ADSO", "documentacion": "/docs"}
+
+@app.get("/", tags=["Inicio"], include_in_schema=False)
+def inicio() -> FileResponse:
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/health", tags=["Inicio"])

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f7f4" />
+    <meta name="description" content="Tienda de tecnología ADSO: explora productos y crea pedidos." />
+    <title>NOVA — tecnología para todos los días</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#catalogo">Saltar al catálogo</a>
+    <div class="announcement">TECNOLOGÍA QUE TE SIGUE EL RITMO <span>·</span> Envíos a toda Colombia</div>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="NOVA, ir al inicio"><span class="brand-mark">N</span><span>NOVA<span class="brand-dot">.</span></span></a>
+      <nav class="main-nav" aria-label="Navegación principal">
+        <a class="active" href="#catalogo">Tienda</a>
+        <a href="#pedidos">Mis pedidos</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button search-toggle" id="search-toggle" aria-label="Buscar productos" title="Buscar">⌕</button>
+        <button class="cart-trigger" id="cart-trigger" aria-label="Abrir carrito">Carrito <span id="cart-count">0</span></button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-line"></span> HECHO PARA TU DÍA</p>
+          <h1 id="hero-title">Tecnología<br />que <em>inspira.</em></h1>
+          <p class="hero-description">Encuentra ese detalle que transforma tu espacio, tu trabajo y tu forma de disfrutar.</p>
+          <a class="button button-dark" href="#catalogo">Explorar productos <span aria-hidden="true">↗</span></a>
+          <div class="hero-note"><span class="live-dot"></span> Productos seleccionados, precios honestos</div>
+        </div>
+        <div class="hero-art" aria-label="Ilustración decorativa de un espacio de trabajo tecnológico" role="img">
+          <div class="art-sun"></div><div class="art-orbit"></div>
+          <div class="art-platform platform-back"></div><div class="art-platform platform-front"></div>
+          <div class="art-monitor"><div class="monitor-screen"><div class="screen-glow"></div><div class="screen-wave"></div></div><div class="monitor-neck"></div><div class="monitor-foot"></div></div>
+          <div class="art-keyboard"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="art-mouse"><span></span></div><div class="art-plant"><i></i><i></i><i></i><b></b></div>
+          <div class="art-label">ESTUDIO / 01</div>
+          <div class="art-stamp"><span>DISEÑO</span><b>+</b><span>FUNCIÓN</span></div>
+        </div>
+        <div class="hero-index"><span>01</span><span class="index-line"></span><span>03</span></div>
+      </section>
+
+      <section class="catalog-section section-wrap" id="catalogo" aria-labelledby="catalog-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">LA SELECCIÓN NOVA</p><h2 id="catalog-title">Pequeños detalles.<br /><em>Grandes ideas.</em></h2></div>
+          <p class="section-description">Piezas esenciales para acompañar tus ideas, desde la primera hora hasta el último proyecto.</p>
+        </div>
+        <div class="catalog-toolbar">
+          <div class="catalog-count"><span id="products-count">—</span> productos <span class="toolbar-divider">/</span> Colección 2026</div>
+          <label class="search-field" id="search-field"><span aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Buscar en la tienda" autocomplete="off" /><button id="clear-search" aria-label="Limpiar búsqueda" hidden>×</button></label>
+          <label class="sort-control">Ordenar <select id="sort-select"><option value="featured">Destacados</option><option value="price-up">Menor precio</option><option value="price-down">Mayor precio</option><option value="name">Nombre</option></select></label>
+        </div>
+        <div class="product-grid" id="product-grid" aria-live="polite"><div class="loading-state">Preparando la selección<span>…</span></div></div>
+      </section>
+
+      <section class="service-strip" aria-label="Beneficios de compra">
+        <div><span class="service-icon">01</span><p><b>Compra simple</b><small>Tu pedido en pocos pasos</small></p></div>
+        <div><span class="service-icon">02</span><p><b>Stock en tiempo real</b><small>Disponibilidad sincronizada</small></p></div>
+        <div><span class="service-icon">03</span><p><b>Atención cercana</b><small>Personas detrás de la tienda</small></p></div>
+      </section>
+
+      <section class="orders-section section-wrap" id="pedidos" aria-labelledby="orders-title">
+        <div class="orders-heading"><div><p class="eyebrow">TU ACTIVIDAD</p><h2 id="orders-title">Pedidos <em>recientes.</em></h2></div><button class="text-button" id="refresh-orders">Actualizar lista <span aria-hidden="true">↻</span></button></div>
+        <div class="orders-list" id="orders-list"><div class="empty-orders">Tus pedidos aparecerán aquí cuando hagas tu primera compra.</div></div>
+      </section>
+    </main>
+
+    <footer class="site-footer"><a class="brand footer-brand" href="/"><span class="brand-mark">N</span><span>NOVA<span class="brand-dot">.</span></span></a><p>Hecho para todos los días.</p><a href="/docs" target="_blank" rel="noreferrer">API del proyecto ↗</a><span>© 2026 NOVA</span></footer>
+
+    <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+    <div class="modal-backdrop" id="modal-backdrop" hidden>
+      <section class="cart-panel" role="dialog" aria-modal="true" aria-labelledby="cart-title" tabindex="-1">
+        <div class="cart-heading"><div><p class="eyebrow">TU SELECCIÓN</p><h2 id="cart-title">Tu carrito<span class="brand-dot">.</span></h2></div><button class="close-button" id="close-cart" aria-label="Cerrar carrito">×</button></div>
+        <div class="cart-items" id="cart-items"></div>
+        <div class="cart-checkout" id="cart-checkout">
+          <label class="field-label" for="customer-select">¿Quién realiza el pedido?</label>
+          <div class="customer-row"><select id="customer-select"><option value="">Cargando clientes…</option></select><button class="add-customer" id="add-customer" type="button" title="Registrar cliente" aria-label="Registrar cliente">+</button></div>
+          <div class="cart-total"><span>Total</span><strong id="cart-total">$ 0</strong></div>
+          <button class="button button-dark checkout-button" id="checkout-button">Finalizar pedido <span aria-hidden="true">↗</span></button>
+          <p class="checkout-note">El inventario se actualiza al confirmar tu compra.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="customer-backdrop" hidden>
+      <section class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="customer-title" tabindex="-1">
+        <button class="close-button dialog-close" id="close-customer" aria-label="Cerrar formulario">×</button>
+        <p class="eyebrow">PRIMERA COMPRA</p><h2 id="customer-title">Tus datos<span class="brand-dot">.</span></h2><p class="dialog-copy">Registra tu información para asociar el pedido.</p>
+        <form id="customer-form"><label class="field-label" for="customer-name">Nombre</label><input class="form-input" id="customer-name" name="nombre" required minlength="2" maxlength="100" placeholder="Tu nombre" /><label class="field-label" for="customer-email">Correo electrónico</label><input class="form-input" id="customer-email" name="correo" type="email" required placeholder="tu@correo.com" /><button class="button button-dark form-submit" type="submit">Guardar cliente <span aria-hidden="true">↗</span></button></form>
+      </section>
+    </div>
+  </body>
+</html>
