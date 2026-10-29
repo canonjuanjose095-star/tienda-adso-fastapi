@@ -2,6 +2,8 @@
 
 Proyecto del Taller práctico N.º 3. Administra clientes, productos y pedidos con MySQL/MariaDB, validación Pydantic, consultas JOIN y transacciones InnoDB.
 
+Repositorio GitHub: [tienda-adso-fastapi](https://github.com/canonjuanjose095-star/tienda-adso-fastapi) (privado).
+
 ## Modelo relacional
 
 ```text
