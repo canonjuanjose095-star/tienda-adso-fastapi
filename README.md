@@ -67,6 +67,7 @@ Se necesita Python 3.10 o posterior y un servidor MySQL/MariaDB ya disponible. N
 | PATCH | `/productos/{id}/stock?stock=10` | Ajustar existencias |
 | GET, POST | `/pedidos` | Listar y confirmar pedido transaccional |
 | GET | `/pedidos/{id}` | Encabezado y detalle con JOIN |
+| POST | `/pedidos/{id}/confirmar` | Confirmar un pedido pendiente y reservar stock |
 | POST | `/pedidos/{id}/cancelar` | Cancelar una vez y devolver existencias |
 | GET | `/reportes/ventas-por-cliente` | Conteo de pedidos y ventas confirmadas |
 
@@ -113,6 +114,10 @@ JOIN tienda_adso.productos pr ON pr.id = d.producto_id;
 - El precio unitario se copia al detalle para conservar el valor histórico aunque cambie el precio del catálogo.
 - La cancelación bloquea el pedido, solo acepta el estado confirmado y devuelve cantidades dentro de la misma transacción.
 - Se rechaza repetir el mismo producto en la lista para mantener cada línea simple y verificable.
+
+## Estados y transiciones de pedidos
+
+Los pedidos se crean confirmados por defecto, por lo que descuentan existencias como en el flujo principal. Si el cuerpo de `POST /pedidos` incluye `"estado":"pendiente"`, se guardan el encabezado y sus detalles sin descontar stock. Las transiciones permitidas son `pendiente → confirmado`, `pendiente → cancelado` y `confirmado → cancelado`; `POST /pedidos/{id}/confirmar` valida y reserva stock en una transacción, mientras que cancelar un pedido pendiente no toca el inventario. `cancelado` es un estado final.
 
 ## Respuestas de sustentación
 

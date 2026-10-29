@@ -30,7 +30,7 @@ def crear(datos: PedidoCrear) -> dict:
             producto = cur.fetchone()
             if producto is None:
                 raise HTTPException(404, f"Producto {item.producto_id} no encontrado")
-            if producto["stock"] < item.cantidad:
+            if datos.estado == "confirmado" and producto["stock"] < item.cantidad:
                 raise HTTPException(409, f"Stock insuficiente del producto {item.producto_id}")
             precio = producto["precio"]
             subtotal = precio * item.cantidad
@@ -38,8 +38,8 @@ def crear(datos: PedidoCrear) -> dict:
             detalles.append((item.producto_id, item.cantidad, precio, subtotal))
 
         cur.execute(
-            "INSERT INTO pedidos (cliente_id, estado, total) VALUES (%s, 'confirmado', %s)",
-            (datos.cliente_id, total),
+            "INSERT INTO pedidos (cliente_id, estado, total) VALUES (%s, %s, %s)",
+            (datos.cliente_id, datos.estado, total),
         )
         pedido_id = cur.lastrowid
         for producto_id, cantidad, precio, subtotal in detalles:
@@ -49,17 +49,55 @@ def crear(datos: PedidoCrear) -> dict:
                    VALUES (%s, %s, %s, %s, %s)""",
                 (pedido_id, producto_id, cantidad, precio, subtotal),
             )
-            cur.execute(
-                "UPDATE productos SET stock=stock-%s WHERE id=%s",
-                (cantidad, producto_id),
-            )
+            if datos.estado == "confirmado":
+                cur.execute(
+                    "UPDATE productos SET stock=stock-%s WHERE id=%s",
+                    (cantidad, producto_id),
+                )
     return {
         "id": pedido_id,
         "cliente_id": datos.cliente_id,
-        "estado": "confirmado",
+        "estado": datos.estado,
         "total": str(total),
         "items": len(detalles),
     }
+
+
+@router.post("/{pedido_id}/confirmar")
+def confirmar(pedido_id: int) -> dict:
+    """Confirma un pedido pendiente y reserva existencias de forma atómica."""
+    with conectar() as db, db.cursor() as cur:
+        cur.execute("SELECT id, estado FROM pedidos WHERE id=%s FOR UPDATE", (pedido_id,))
+        pedido = cur.fetchone()
+        if pedido is None:
+            raise HTTPException(404, "Pedido no encontrado")
+        if pedido["estado"] != "pendiente":
+            raise HTTPException(409, "Solo se pueden confirmar pedidos pendientes")
+
+        cur.execute(
+            """SELECT producto_id, cantidad FROM detalle_pedidos
+               WHERE pedido_id=%s ORDER BY producto_id""",
+            (pedido_id,),
+        )
+        detalles = cur.fetchall()
+        for detalle in detalles:
+            cur.execute(
+                "SELECT id, stock FROM productos WHERE id=%s FOR UPDATE",
+                (detalle["producto_id"],),
+            )
+            producto = cur.fetchone()
+            if producto is None:
+                raise HTTPException(404, f"Producto {detalle['producto_id']} no encontrado")
+            if producto["stock"] < detalle["cantidad"]:
+                raise HTTPException(409, f"Stock insuficiente del producto {detalle['producto_id']}")
+
+        for detalle in detalles:
+            cur.execute(
+                "UPDATE productos SET stock=stock-%s WHERE id=%s",
+                (detalle["cantidad"], detalle["producto_id"]),
+            )
+        cur.execute("UPDATE pedidos SET estado='confirmado' WHERE id=%s", (pedido_id,))
+    return {"id": pedido_id, "estado": "confirmado", "mensaje": "Pedido confirmado y stock reservado"}
 
 
 @router.get("")
@@ -107,17 +145,18 @@ def cancelar(pedido_id: int) -> dict:
             raise HTTPException(404, "Pedido no encontrado")
         if pedido["estado"] == "cancelado":
             raise HTTPException(409, "El pedido ya fue cancelado")
-        if pedido["estado"] != "confirmado":
-            raise HTTPException(409, "Solo se pueden cancelar pedidos confirmados")
+        if pedido["estado"] not in ("pendiente", "confirmado"):
+            raise HTTPException(409, "El estado actual no permite cancelar el pedido")
 
-        cur.execute(
-            "SELECT producto_id, cantidad FROM detalle_pedidos WHERE pedido_id=%s ORDER BY producto_id",
-            (pedido_id,),
-        )
-        for item in cur.fetchall():
+        if pedido["estado"] == "confirmado":
             cur.execute(
-                "UPDATE productos SET stock=stock+%s WHERE id=%s",
-                (item["cantidad"], item["producto_id"]),
+                "SELECT producto_id, cantidad FROM detalle_pedidos WHERE pedido_id=%s ORDER BY producto_id",
+                (pedido_id,),
             )
+            for item in cur.fetchall():
+                cur.execute(
+                    "UPDATE productos SET stock=stock+%s WHERE id=%s",
+                    (item["cantidad"], item["producto_id"]),
+                )
         cur.execute("UPDATE pedidos SET estado='cancelado' WHERE id=%s", (pedido_id,))
     return {"id": pedido_id, "estado": "cancelado", "mensaje": "Existencias devueltas"}

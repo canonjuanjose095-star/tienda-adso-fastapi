@@ -37,6 +37,7 @@ class ItemPedido(BaseModel):
 class PedidoCrear(BaseModel):
     cliente_id: int = Field(gt=0)
     items: list[ItemPedido] = Field(min_length=1)
+    estado: Literal["pendiente", "confirmado"] = "confirmado"
 
 
 class PedidoResumen(BaseModel):
