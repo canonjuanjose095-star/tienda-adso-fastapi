@@ -95,3 +95,29 @@ def detalle(pedido_id: int) -> dict:
         )
         pedido["items"] = cur.fetchall()
         return pedido
+
+
+@router.post("/{pedido_id}/cancelar")
+def cancelar(pedido_id: int) -> dict:
+    """Cancela una sola vez y devuelve cada cantidad al inventario atómicamente."""
+    with conectar() as db, db.cursor() as cur:
+        cur.execute("SELECT id, estado FROM pedidos WHERE id=%s FOR UPDATE", (pedido_id,))
+        pedido = cur.fetchone()
+        if pedido is None:
+            raise HTTPException(404, "Pedido no encontrado")
+        if pedido["estado"] == "cancelado":
+            raise HTTPException(409, "El pedido ya fue cancelado")
+        if pedido["estado"] != "confirmado":
+            raise HTTPException(409, "Solo se pueden cancelar pedidos confirmados")
+
+        cur.execute(
+            "SELECT producto_id, cantidad FROM detalle_pedidos WHERE pedido_id=%s ORDER BY producto_id",
+            (pedido_id,),
+        )
+        for item in cur.fetchall():
+            cur.execute(
+                "UPDATE productos SET stock=stock+%s WHERE id=%s",
+                (item["cantidad"], item["producto_id"]),
+            )
+        cur.execute("UPDATE pedidos SET estado='cancelado' WHERE id=%s", (pedido_id,))
+    return {"id": pedido_id, "estado": "cancelado", "mensaje": "Existencias devueltas"}
