@@ -294,6 +294,48 @@ $("#customer-form").addEventListener("submit", async (event) => {
   }
 });
 
+async function checkout() {
+  const customerId = Number($("#customer-select").value);
+  if (!customerId) {
+    showToast("Selecciona o registra un cliente antes de continuar.", "error");
+    $("#customer-select").focus();
+    return;
+  }
+  if (!state.cart.size) {
+    showToast("Agrega al menos un producto a tu carrito.", "error");
+    return;
+  }
+  const button = $("#checkout-button");
+  button.disabled = true;
+  button.innerHTML = "Procesando tu pedido <span aria-hidden=\"true\">…</span>";
+  try {
+    const order = await api("/pedidos", {
+      method: "POST",
+      body: JSON.stringify({
+        cliente_id: customerId,
+        items: [...state.cart.entries()].map(([producto_id, line]) => ({ producto_id, cantidad: line.quantity })),
+      }),
+    });
+    const customer = state.customers.find((item) => item.id === customerId);
+    state.cart.clear();
+    updateCartBadge();
+    renderCart();
+    closeCart();
+    showToast(`Pedido #${order.id} confirmado. Total: ${money(order.total)}. ¡Gracias${customer ? `, ${customer.nombre}` : ""}!`);
+    await Promise.all([loadProducts(state.search), loadOrders()]);
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    button.innerHTML = 'Finalizar pedido <span aria-hidden="true">↗</span>';
+    button.disabled = state.cart.size === 0;
+  }
+}
+
+$("#checkout-button").addEventListener("click", checkout);
+$("#customer-select").addEventListener("focus", () => {
+  if (!state.customers.length) loadCustomers();
+});
+
 $("#cart-trigger").addEventListener("click", openCart);
 $("#close-cart").addEventListener("click", closeCart);
 $("#modal-backdrop").addEventListener("click", (event) => {
@@ -345,3 +387,6 @@ $("#search-toggle").addEventListener("click", () => {
 });
 
 loadProducts();
+loadCustomers();
+updateCartBadge();
+renderCart();
