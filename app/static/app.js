@@ -1,5 +1,5 @@
 const $ = (selector) => document.querySelector(selector);
-const state = { products: [], cart: new Map(), customers: [], orders: [], search: "" };
+const state = { products: [], cart: new Map(), customers: [], orders: [], search: "", productRequestId: 0 };
 
 const money = (value) => new Intl.NumberFormat("es-CO", {
   style: "currency", currency: "COP", maximumFractionDigits: 0,
@@ -487,18 +487,25 @@ $("#modal-backdrop").addEventListener("click", (event) => {
   if (event.target === $("#modal-backdrop")) closeCart();
 });
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !$("#modal-backdrop").hidden) closeCart();
+  if (event.key !== "Escape") return;
+  if (!$("#customer-backdrop").hidden) closeCustomerDialog();
+  else if (!$("#order-backdrop").hidden) closeOrderDetails();
+  else if (!$("#modal-backdrop").hidden) closeCart();
 });
 
 async function loadProducts(search = "") {
+  const requestId = ++state.productRequestId;
   const grid = $("#product-grid");
   grid.innerHTML = '<div class="loading-state">Preparando la selección<span>…</span></div>';
   try {
     const query = new URLSearchParams({ pagina: "1", limite: "50" });
     if (search.trim()) query.set("buscar", search.trim());
-    state.products = await api(`/productos?${query}`);
+    const products = await api(`/productos?${query}`);
+    if (requestId !== state.productRequestId) return;
+    state.products = products;
     renderProducts();
   } catch (error) {
+    if (requestId !== state.productRequestId) return;
     grid.innerHTML = "";
     const message = document.createElement("div");
     message.className = "empty-state error-state";
