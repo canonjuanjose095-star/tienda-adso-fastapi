@@ -224,6 +224,76 @@ function closeCart() {
   $("#cart-trigger").focus();
 }
 
+function renderCustomers(selectedId = "") {
+  const select = $("#customer-select");
+  select.replaceChildren();
+  if (!state.customers.length) {
+    const placeholder = new Option("Registra un cliente para continuar", "");
+    select.append(placeholder);
+    return;
+  }
+  select.append(new Option("Selecciona tu nombre", ""));
+  for (const customer of state.customers) {
+    const option = new Option(`${customer.nombre} · ${customer.correo}`, String(customer.id));
+    select.append(option);
+  }
+  if (selectedId) select.value = String(selectedId);
+}
+
+async function loadCustomers(selectedId = "") {
+  const select = $("#customer-select");
+  select.replaceChildren(new Option("Cargando clientes…", ""));
+  try {
+    state.customers = await api("/clientes");
+    renderCustomers(selectedId);
+  } catch (error) {
+    select.replaceChildren(new Option("No se pudieron cargar los clientes", ""));
+    showToast(`No se pudieron cargar los clientes: ${error.message}`, "error");
+  }
+}
+
+function openCustomerDialog() {
+  $("#customer-backdrop").hidden = false;
+  $("#customer-name").value = "";
+  $("#customer-email").value = "";
+  document.body.style.overflow = "hidden";
+  $("#customer-name").focus();
+}
+
+function closeCustomerDialog() {
+  $("#customer-backdrop").hidden = true;
+  document.body.style.overflow = $("#modal-backdrop").hidden ? "" : "hidden";
+  $("#add-customer").focus();
+}
+
+$("#add-customer").addEventListener("click", openCustomerDialog);
+$("#close-customer").addEventListener("click", closeCustomerDialog);
+$("#customer-backdrop").addEventListener("click", (event) => {
+  if (event.target === $("#customer-backdrop")) closeCustomerDialog();
+});
+$("#customer-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const submit = event.currentTarget.querySelector("[type=submit]");
+  submit.disabled = true;
+  try {
+    const customer = await api("/clientes", {
+      method: "POST",
+      body: JSON.stringify({
+        nombre: $("#customer-name").value.trim(),
+        correo: $("#customer-email").value.trim(),
+      }),
+    });
+    state.customers.push(customer);
+    renderCustomers(customer.id);
+    closeCustomerDialog();
+    showToast(`¡Hola, ${customer.nombre}! Ya puedes finalizar tu compra.`);
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    submit.disabled = false;
+  }
+});
+
 $("#cart-trigger").addEventListener("click", openCart);
 $("#close-cart").addEventListener("click", closeCart);
 $("#modal-backdrop").addEventListener("click", (event) => {
